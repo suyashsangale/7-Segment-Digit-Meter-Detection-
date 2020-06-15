@@ -11,16 +11,22 @@ from collections import defaultdict
 from io import StringIO
 from matplotlib import pyplot as plt
 from PIL import Image
-
-# This is needed since the notebook is stored in the object_detection folder.
-sys.path.append("..")
 from object_detection.utils import ops as utils_ops
+from utils import label_map_util
+from utils import visualization_utils as vis_util
+
+from imutils.perspective import four_point_transform
+from imutils import contours
+import imutils
+import cv2
+
+from numpy import loadtxt
+from keras.models import load_model
+import os
 
 if StrictVersion(tf.__version__) < StrictVersion('1.9.0'):
     raise ImportError('Please upgrade your TensorFlow installation to v1.9.* or later!')
 #%matplotlib inline
-from utils import label_map_util
-from utils import visualization_utils as vis_util
 PATH_TO_FROZEN_GRAPH = r'Capstone_project_2\inference_graph\frozen_inference_graph.pb'
 PATH_TO_LABELS = r'Capstone_project_2\training\labelmap.pbtxt'
 
@@ -65,14 +71,16 @@ def run_inference_for_single_image(image, graph):
     if 'detection_masks' in output_dict:
         output_dict['detection_masks'] = output_dict['detection_masks'][0]
     return output_dict
-	
-input_image_file_name = 'no_flash_meter_Copy/m30.jpg'
+
+image_name = sys.argv[1]	
+input_image_file_name = 'no_flash_meter_Copy/'+ image_name
+print(input_image_file_name)
 
 
-import os
+
 os.getcwd()
 #os.chdir(r'C:\Users\Suyash\no_flash_meter_Copy')
-import cv2
+
 with detection_graph.as_default():
         with tf.Session() as sess:
                 # Get handles to input and output tensors
@@ -201,16 +209,12 @@ cv2.destroyAllWindows()
 
 im = dilation.copy()
 
-from numpy import loadtxt
-from keras.models import load_model
+
 model = load_model('model_2.h5')
 model.summary()
 
 # import the necessary packages
-from imutils.perspective import four_point_transform
-from imutils import contours
-import imutils
-import cv2
+
 cnts = cv2.findContours(im.copy(), cv2.RETR_EXTERNAL,
 	cv2.CHAIN_APPROX_SIMPLE)
 cnts = imutils.grab_contours(cnts)
@@ -268,10 +272,10 @@ for i in range(0,len(digitCnts)):
 if(op_dig[0]!=0)and (len(digitCnts)==9):
     op_dig.pop(0)
 	
+print("Predicted Digits are :")
 print(op_dig)
-for i in op_dig: 
-    print(i, end="") 
-	
+readings = ''.join(map(str, op_dig))
+print("Meter Reading is " + readings + " units")
 cv2.imshow('object_detection', cv2.resize(image_np, (800, 600)))
 cv2.waitKey(0)
 cv2.destroyAllWindows()
